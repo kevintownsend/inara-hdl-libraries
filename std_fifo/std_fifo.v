@@ -60,11 +60,11 @@ module std_fifo(rst, clk, push, pop, d, q, full, empty, count, almost_empty, alm
 
     always @(posedge clk) begin
         if(full && push) begin
-            $display("ERROR: Overflow at %m");
+            $display("ERROR: %d Overflow at %m", $time);
             $finish;
         end
         if(empty && pop) begin
-            $display("ERROR: underflow at %m");
+            $display("ERROR: %d underflow at %m", $time);
             $finish;
         end
     end

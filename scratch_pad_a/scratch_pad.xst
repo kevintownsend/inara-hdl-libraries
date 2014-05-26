@@ -1,0 +1,1 @@
+run -ifn scratch_pad.prj -ifmt mixed -top scratch_pad -ofn scratch_pad.ngc -ofmt NGC -p xc5vlx330-2 -opt_mode Speed -opt_level 1

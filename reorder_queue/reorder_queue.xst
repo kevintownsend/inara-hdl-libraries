@@ -1,0 +1,1 @@
+run -ifn reorder_queue.prj -ifmt mixed -top reorder_queue -ofn reorder_queue.ngc -ofmt NGC -p xc5vlx330-2 -opt_mode Speed -opt_level 1

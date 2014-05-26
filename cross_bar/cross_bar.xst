@@ -1,0 +1,2 @@
+run -ifn cross_bar.prj -ifmt mixed -top cross_bar -ofn cross_bar.ngc -ofmt NGC -p xc5vlx330-2 -opt_mode Speed -opt_level 1
+

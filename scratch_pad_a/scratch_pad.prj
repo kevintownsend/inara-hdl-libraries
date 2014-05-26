@@ -1,0 +1,6 @@
+verilog work ../arbiter/arbiter.v
+verilog work ../cross_bar/cross_bar.v
+verilog work scratch_pad.v
+verilog work ../reorder_queue/reorder_queue.v
+verilog work ../std_fifo/std_fifo.v
+verilog work simple_ram.v
