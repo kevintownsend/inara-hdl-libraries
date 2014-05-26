@@ -1,0 +1,1 @@
+run -ifn arbiter.prj -ifmt mixed -top arbiter -ofn arbiter.ngc -ofmt NGC -p xc5vlx330-2 -opt_mode Speed -opt_level 1

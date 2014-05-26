@@ -1,0 +1,2 @@
+verilog work arbiter.v
+verilog work ../std_fifo/std_fifo.v

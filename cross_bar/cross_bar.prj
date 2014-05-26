@@ -1,0 +1,3 @@
+verilog work ../std_fifo/std_fifo.v
+verilog work ../arbiter/arbiter.v
+verilog work cross_bar.v
