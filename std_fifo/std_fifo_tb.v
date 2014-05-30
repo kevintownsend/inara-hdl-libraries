@@ -46,6 +46,7 @@ initial begin
     d = 0;
 
     #101 rst = 0;
+    $display("time: %d", $time);
     #10 if(empty != 1) begin
         $display("test1:failed");
     end else begin
@@ -101,5 +102,6 @@ initial begin
     clk = 1;
     forever #5 clk=~clk;
 end
-
+initial
+     $monitor("At time %t, value ", $time);
 endmodule

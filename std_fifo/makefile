@@ -1,5 +1,5 @@
 sim :
-	iverilog -o std_fifo_tb.vvp -I.. std_fifo.v std_fifo_tb.v -o std_fifo_tb
+	iverilog -o std_fifo_tb.vvp -I.. std_fifo_tb.v std_fifo.v 	
 	std_fifo_tb.vvp
 
 synth :
