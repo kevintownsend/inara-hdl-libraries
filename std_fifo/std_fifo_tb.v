@@ -1,6 +1,5 @@
 /**
  * Copyright 2014 Kevin Townsend
- * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +21,7 @@ reg push, pop;
 reg [7:0] d;
 wire [7:0] q;
 wire full, empty;
-wire [6:0] count;
+wire [3:0] count;
 wire almost_empty;
 wire almost_full;
 
@@ -41,6 +40,7 @@ std_fifo dut(
 integer i;
 
 initial begin
+    $display("starting testbench");
     rst = 1;
     push = 0; pop = 0;
     d = 0;
