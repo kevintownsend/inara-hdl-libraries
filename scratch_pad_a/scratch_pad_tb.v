@@ -1,4 +1,5 @@
 module scratch_pad_tb;
+    //TODO: clean up code, fewer display statements
     `include "log2.vh"
     `include "abs.vh"
     `include "constants.vh"
@@ -22,12 +23,10 @@ module scratch_pad_tb;
         forever #5 clk = !clk;
     end
 
-    //TODO: gold scratchpad
     wire [`PORTS*`WIDTH-1:0] gold_q;
     wire [0:`PORTS -1] gold_valid;
     wire [0:`PORTS -1] gold_full;
     scratch_pad_gold #(`PORTS, `WIDTH) gold_model(rst, clk, rd_en, wr_en, d, gold_q, addr, stall, gold_valid, gold_full);
-    //TODO: fifos
     integer begin_ptr [0:`PORTS];
     integer end_ptr [0:`PORTS];
     reg [`WIDTH-1:0] fifo_data [0:`PORTS][0:10000];
@@ -209,7 +208,6 @@ module scratch_pad_tb;
                     $finish;
                 end
                 end_ptr[i] = end_ptr[i] + 1;
-                //TODO: loop for 10000
             end
         end
     end

@@ -1,4 +1,3 @@
-//TODO:full logic incorperate xbar
 module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     parameter PORTS = 8;
     parameter WIDTH = 64;
