@@ -40,6 +40,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
                 //$finish;
             end
         end
+        /*
         for(i=0;i<PORTS;i=i+1) begin
             if(send_cross_bar_almost_full[i]) begin
                 $display("WARNING: %d:%m send cross bar almost full port %d", $time, i);
@@ -53,6 +54,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
                 $finish;
             end
         end
+        */
     end
     //input
     reg [WIDTH+ADDR_WIDTH-1:0] send_input_stage_data [0:PORTS-1];
@@ -64,7 +66,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
                 send_input_stage_data[i][j+ADDR_WIDTH] = d[(PORTS-i-1)*(WIDTH)+j];
         end
     //output 
-    wire [WIDTH+REORDER_BITS:0] recv_reorder_stage_data [0:PORTS-1];
+    wire [WIDTH+REORDER_BITS-1:0] recv_reorder_stage_data [0:PORTS-1];
     always @*
         for(i = 0; i < PORTS; i = i + 1)
             for(j = 0; j < WIDTH; j = j + 1)
@@ -168,6 +170,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     endgenerate
 
     //DEBUG
+    /*
     always @(posedge clk) begin
         //input
         for(i=0;i<PORTS;i=i+1) begin
@@ -207,7 +210,6 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
         end
         //TODO: output
     end
-    /*
     always @(posedge clk) begin
         if(`DEBUG) begin
             for(i = 0; i < PORTS; i = i + 1) begin

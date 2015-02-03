@@ -63,7 +63,6 @@ module reorder_queue(rst, clk, increment, index_tag, full, wr_en, d, q, valid, s
             state <= `RESET_STATE;
     end
 
-
     always @* begin
         if(state == `RESET_STATE)begin
             occupency_array_d = 1;
@@ -81,9 +80,11 @@ module reorder_queue(rst, clk, increment, index_tag, full, wr_en, d, q, valid, s
     //TODO: raise error if full and increment
     always @(posedge clk) begin
         if(full) begin
-            $display("WARNING: %d, %m is full", $time);
+            //$display("WARNING: %d, %m is full", $time);
+        end
+        if(full && increment) begin
+            $display("ERROR: %d, %m OVERFLOW", $time);
+            $finish;
         end
     end
 endmodule
-
-

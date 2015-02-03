@@ -29,13 +29,13 @@ arbiter : $(compile_arbiter)
 simple_ram : $(compile_simple_ram)
 scratch_pad_gold : $(compile_scratch_pad_gold)
 
-$(compile_scratch_pad) : scratch_pad.v
+$(compile_scratch_pad) : scratch_pad.v $(compile_cross_bar) $(compile_reorder_queue) $(compile_simple_ram)
 	vlog -work work scratch_pad.v +incdir+./..
 
-$(compile_scratch_pad_tb) : scratch_pad_tb.v
+$(compile_scratch_pad_tb) : scratch_pad_tb.v $(compile_scratch_pad_gold)
 	vlog -work work scratch_pad_tb.v +incdir+./..
 
-$(compile_reorder_queue) : ../reorder_queue/reorder_queue.v
+$(compile_reorder_queue) : ../reorder_queue/reorder_queue.v $(compile_arbiter)
 	vlog -work work ../reorder_queue/reorder_queue.v +incdir+./..
 
 $(compile_cross_bar) : ../cross_bar/cross_bar.v
@@ -44,7 +44,7 @@ $(compile_cross_bar) : ../cross_bar/cross_bar.v
 $(compile_std_fifo) : ../std_fifo/std_fifo.v
 	vlog -work work ../std_fifo/std_fifo.v +incdir+./..
 
-$(compile_arbiter) : ../arbiter/arbiter.v
+$(compile_arbiter) : ../arbiter/arbiter.v $(compile_std_fifo)
 	vlog -work work ../arbiter/arbiter.v +incdir+./..
 
 $(compile_simple_ram) : simple_ram.v
@@ -53,7 +53,7 @@ $(compile_simple_ram) : simple_ram.v
 $(compile_scratch_pad_gold) : ../scratch_pad_gold/scratch_pad_gold.v
 	vlog -work work ../scratch_pad_gold/scratch_pad_gold.v +incdir+./..
 
-check : $(compile_scratch_pad) $(compile_scratch_pad_tb)
+check : work $(compile_scratch_pad) $(compile_scratch_pad_tb)
 	vsim < test.do
 
 synthesis :
