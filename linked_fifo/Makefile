@@ -27,5 +27,7 @@ $(compile_linked_fifo_tb) : linked_fifo_tb.v
 check : all
 	vsim < test.do
 
+xst : linked_fifo.v
+
 clean :
 	rm -rf work transcript *.lso *.out *.ngc *.xrpt *.srp _xmsgs xst out.xst
