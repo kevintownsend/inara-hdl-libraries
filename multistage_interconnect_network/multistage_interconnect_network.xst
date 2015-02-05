@@ -1,0 +1,1 @@
+run -vlgincdir ../. -ifn multistage_interconnect_network.prj -ifmt mixed -top multistage_interconnect_network_synthesis -ofn multistage_interconnect_network.ngc -ofmt NGC -p xc5vlx330-2 -opt_mode Speed -opt_level 2
