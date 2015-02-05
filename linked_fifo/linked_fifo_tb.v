@@ -1,7 +1,10 @@
 `timescale 1ns/1ps
 //TODO: create gold model
 module linked_fifo_tb;
-
+    `define WIDTH 8
+    `define DEPTH 32
+    `define FIFOS 8
+    `define LOG2_FIFO log2(`FIFOS-1)
     reg rst, clk;
     reg push;
     reg [2:0] push_fifo;
@@ -12,9 +15,14 @@ module linked_fifo_tb;
     wire empty;
     wire full;
     wire [3*8-1:0] count;
+    wire [7:0] q_gold;
+    wire empty_gold;
+    wire full_gold;
+    wire [3*8-1:0] count_gold;
     //TODO: add free
 
-    linked_fifo dut(rst, clk, push, push_fifo, pop, pop_fifo, d, q, empty, full, count);
+    linked_fifo #(`WIDTH, `DEPTH, `FIFOS) dut(rst, clk, push, push_fifo, pop, pop_fifo, d, q, empty, full,);
+    linked_fifo_gold #(`WIDTH, `DEPTH, `FIFOS) gold(rst, clk, push, push_fifo, pop, pop_fifo, d, q_gold, empty_gold, full_gold,);
 
     integer timeout;
     integer i;
@@ -44,6 +52,7 @@ module linked_fifo_tb;
         d <= 0;
         #101 rst <= 0;
         #1000 push <= 1;
+        $display("first push at %d", $time);
         d <= 5;
         #10 push <= 0;
         #10 push <= 1;
@@ -103,7 +112,8 @@ module linked_fifo_tb;
                 pop = 0;
             #9 timeout = timeout + 1;
         end
-        #100 $display($random);
+        #100;
+        $display("finished NO ERRORS");
         $finish;
     end
 
@@ -138,6 +148,16 @@ module linked_fifo_tb;
             print_linked_info();
             
             $finish;
+        end
+    end
+    //TODO: check
+    always @(posedge clk) begin
+        if(pop_delay && q != q_gold) begin
+            $display("ERROR: output does not match gold model at %d", $time);
+            $display("GOLD: %d ACTUAL: %d", q_gold, q);
+        end
+        if(pop_delay) begin
+            //$display("GOLD: %d ACTUAL: %d", q_gold, q);
         end
     end
 endmodule
