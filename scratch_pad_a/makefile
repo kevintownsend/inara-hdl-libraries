@@ -1,7 +1,6 @@
 all : work scratch_pad scratch_pad_tb reorder_queue cross_bar std_fifo arbiter simple_ram scratch_pad_gold
 
 work :
-	${HOME}/Xilinx_Env
 	vlib work
 
 compile_scratch_pad = work/scratch_pad
