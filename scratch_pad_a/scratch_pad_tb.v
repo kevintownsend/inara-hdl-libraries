@@ -4,12 +4,13 @@ module scratch_pad_tb;
     `include "abs.vh"
     `include "constants.vh"
     `define PORTS 64
-    `define WIDTH 64
+    //TODO: track down why WIDTH=8 does not work
+    `define WIDTH 16
     `define FRAGMENT_DEPTH 512
     `define DEPTH `PORTS*`FRAGMENT_DEPTH
     `define ADDR_WIDTH log2(`DEPTH-1)
-    `define ADDR_TEST_MAX 512
-    `define REORDER_DEPTH 512
+    `define ADDR_TEST_MAX `FRAGMENT_DEPTH * 2
+    `define REORDER_DEPTH 32
     reg rst, clk;
     reg [0:`PORTS-1] rd_en, wr_en;
     reg [`PORTS*`WIDTH-1:0] d;
@@ -17,6 +18,7 @@ module scratch_pad_tb;
     reg [`PORTS*`ADDR_WIDTH-1:0] addr;
     reg [0:`PORTS-1] stall;
     wire [0:`PORTS - 1] valid, full;
+    //TODO: ports and addresses not lining up
     
     scratch_pad #(`PORTS, `WIDTH, `FRAGMENT_DEPTH, `REORDER_DEPTH) dut(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     
@@ -32,7 +34,7 @@ module scratch_pad_tb;
     integer begin_ptr [0:`PORTS];
     integer end_ptr [0:`PORTS];
     reg [`WIDTH-1:0] fifo_data [0:`PORTS][0:100000];
-    integer i;
+    integer i, j;
     initial begin
         for(i = 0; i < `PORTS; i = i + 1) begin
             begin_ptr[i] = 0;
@@ -81,7 +83,7 @@ module scratch_pad_tb;
         $display("writing initial data");
         for(addr_iterator = 0; addr_iterator < `ADDR_TEST_MAX; addr_iterator = addr_iterator + 1) begin
             wr_en[0] = 1;
-            d[`PORTS * `WIDTH - 1 -: `WIDTH] = addr_iterator;
+            d[`PORTS * `WIDTH - 1 -: `WIDTH] = abs($random);
             addr[`PORTS * `ADDR_WIDTH - 1 -: `ADDR_WIDTH] = addr_iterator;
 
             #10;
@@ -131,6 +133,7 @@ module scratch_pad_tb;
         #1000;
         */
         //stress test write at two ports.
+        /*
         $display("stress testing writing at port 0 and 1");
         $display("start time: %d",$time);
         start_time=$time;
@@ -177,7 +180,6 @@ module scratch_pad_tb;
         end
         rd_en=0;
         $display("end time: %d",$time);
-
         //TODO: stress test all ports sequencial write
         #1000;
         $display("stress testing writing all ports");
@@ -206,8 +208,9 @@ module scratch_pad_tb;
         for(i=0;i<`PORTS;i=i+1)begin
             $display("data sent from port %d: %d", i, data_sent[i]);
         end
+        */
         //TODO: stress test all ports sequencial read
-        #1000;
+        #10000;
         $display("stress testing writing all ports");
         $display("start time: %d",$time);
         start_time=$time;
@@ -266,7 +269,7 @@ module scratch_pad_tb;
         end
         */
         //TODO: stress test all ports random read
-        #1000;
+        #10000;
         $display("stress testing writing all ports");
         $display("start time: %d",$time);
         start_time=$time;
@@ -280,6 +283,68 @@ module scratch_pad_tb;
                 if(!full[i]) begin
                     rd_en[i]=1;
                     addr[(`PORTS-i)*`ADDR_WIDTH-1 -:`ADDR_WIDTH]=abs($random) % `ADDR_TEST_MAX;
+                    data_sent[i]=data_sent[i]+1;
+                end else begin
+                    rd_en[i]=0;
+                end
+            end
+            #10;
+        end
+        $display("stopped sending");
+        rd_en=0;
+        $display("end time: %d",$time);
+        $display("total time: %d", ($time-start_time));
+        for(i=0;i<`PORTS;i=i+1)begin
+            $display("data sent from port %d: %d", i, data_sent[i]);
+        end
+
+        //TODO: stress test all ports random read
+        #10000;
+        $display("stress testing reading all ports");
+        $display("start time: %d",$time);
+        start_time=$time;
+        j=0;
+        for(i=0;i<`PORTS;i=i+1)begin
+            data_sent[i]=0;
+            data_to_send[i]=1000;
+        end
+        $display("starting to send");
+        for(si=0; si<1000; si=si+1) begin
+            for(i=0;i<`PORTS;i=i+1)begin
+                if(!full[i]) begin
+                    rd_en[i]=1;
+                    addr[(`PORTS-i)*`ADDR_WIDTH-1 -:`ADDR_WIDTH]=(j*`PORTS) % `ADDR_TEST_MAX;
+                    j = j + 1;
+                    data_sent[i]=data_sent[i]+1;
+                end else begin
+                    rd_en[i]=0;
+                end
+            end
+            #10;
+        end
+        $display("stopped sending");
+        rd_en=0;
+        $display("end time: %d",$time);
+        $display("total time: %d", ($time-start_time));
+        for(i=0;i<`PORTS;i=i+1)begin
+            $display("data sent from port %d: %d", i, data_sent[i]);
+        end
+
+        //TODO: stress test all ports random read
+        #10000;
+        $display("stress testing reading all ports");
+        $display("start time: %d",$time);
+        start_time=$time;
+        for(i=0;i<`PORTS;i=i+1)begin
+            data_sent[i]=0;
+            data_to_send[i]=1000;
+        end
+        $display("starting to send");
+        for(si=0; si<1000; si=si+1) begin
+            for(i=0;i<`PORTS;i=i+1)begin
+                if(!full[i]) begin
+                    rd_en[i]=1;
+                    addr[(`PORTS-i)*`ADDR_WIDTH-1 -:`ADDR_WIDTH]=i;
                     data_sent[i]=data_sent[i]+1;
                 end else begin
                     rd_en[i]=0;
