@@ -1,5 +1,9 @@
 all : work scratch_pad scratch_pad_tb reorder_queue cross_bar std_fifo arbiter simple_ram scratch_pad_gold
 
+sim :
+	iverilog -o std_fifo_tb.vvp -I.. ../simple_ram/simple_ram.v ../scratch_pad_gold/scratch_pad_gold.v scratch_pad_tb.v scratch_pad.v ../arbiter/arbiter.v ../std_fifo/std_fifo.v ../reorder_queue/reorder_queue.v ../cross_bar/cross_bar.v 
+	std_fifo_tb.vvp
+
 work :
 	vlib work
 
