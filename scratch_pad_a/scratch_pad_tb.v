@@ -3,7 +3,7 @@ module scratch_pad_tb;
     `include "log2.vh"
     `include "abs.vh"
     `include "constants.vh"
-    `define PORTS 64
+    `define PORTS 8
     //TODO: track down why WIDTH=8 does not work
     `define WIDTH 16
     `define FRAGMENT_DEPTH 512
