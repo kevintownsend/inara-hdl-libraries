@@ -3,7 +3,7 @@ module scratch_pad_tb;
     `include "log2.vh"
     `include "abs.vh"
     `include "constants.vh"
-    `define PORTS 8
+    `define PORTS 64
     //TODO: track down why WIDTH=8 does not work
     `define WIDTH 16
     `define FRAGMENT_DEPTH 512
@@ -47,6 +47,7 @@ module scratch_pad_tb;
     integer start_time;
     integer data_sent [0:`PORTS-1];
     integer data_to_send [0:`PORTS-1];
+    integer max_data_sent;
     integer first_finish, all_finish;
     reg [`ADDR_WIDTH-1:0] addr_iterator;
     integer ignore_full;
@@ -300,14 +301,15 @@ module scratch_pad_tb;
 
         //TODO: stress test all ports random read
         #10000;
-        $display("stress testing reading all ports");
-        $display("start time: %d",$time);
+        $display("stress testing worst case reading, all ports");
+        $display("start time: %d", $time);
         start_time=$time;
         j=0;
         for(i=0;i<`PORTS;i=i+1)begin
             data_sent[i]=0;
             data_to_send[i]=1000;
         end
+        max_data_sent = 0;
         $display("starting to send");
         for(si=0; si<1000; si=si+1) begin
             for(i=0;i<`PORTS;i=i+1)begin
@@ -319,8 +321,29 @@ module scratch_pad_tb;
                 end else begin
                     rd_en[i]=0;
                 end
+                if(data_sent[i] > max_data_sent)
+                    max_data_sent = data_sent[i];
             end
             #10;
+            if(max_data_sent > 32) begin
+                $display("trigger hit:");
+            end
+                //for(i=0;i<`PORTS;i=i+1)begin
+                //    $display("data sent from port %d: %d", i, data_sent[i]);
+                //end
+                //TODO: assert only reads on port 0;
+                //TODO: look at arbiters
+                for(i=1;i<`PORTS;i=i+1)begin
+                    //$display("debug: %b", dut.send_cross_bar_stage_data[i][1:0]);
+                    if((dut.send_cross_bar_stage_data[i][0] != 0) && i != 0) begin
+                        $display("valid on wrong port");
+                        $finish;
+                    end
+                end
+                if(dut.send_cross_bar_stage_data[0][0] == 1 && dut.send_cross_bar_stage_data[0][1] != 0) begin
+                    $display("valid but not...");
+                    $finish;
+                end
         end
         $display("stopped sending");
         rd_en=0;
@@ -360,6 +383,8 @@ module scratch_pad_tb;
             $display("data sent from port %d: %d", i, data_sent[i]);
         end
 
+        //TODO: check state with sequential read.
+
         //TODO: stress test all ports random read write
 
         #10000 $display("No ERRORS");
@@ -373,10 +398,10 @@ module scratch_pad_tb;
     always @(posedge clk) begin
         if(`DEBUG) begin
             $display("debug on");
-            for(i = 0; i < 8; i = i + 1)
+            for(i = 0; i < `PORTS; i = i + 1)
                 if(valid[i])
                     $display("i:%d read output: %H", i, q[`PORTS*`WIDTH-1 -: `WIDTH ]);
-            for(i = 0; i < 8; i = i + 1) begin
+            for(i = 0; i < `PORTS; i = i + 1) begin
                 if(rd_en[i] || wr_en[i])
                     $display("i:%d using address: %H", i, addr[`PORTS*`ADDR_WIDTH-1 -: `ADDR_WIDTH ]);
                 if(wr_en[i])
