@@ -221,7 +221,8 @@ module linked_fifo(rst, clk, push, push_fifo, pop, pop_fifo, d, q, empty, full, 
                 //$display("@linked_fifo: count: %d", count);
             end
             if(total_count != DEPTH-FIFOS) begin
-                $display("%d: @linked_fifo: ERROR: total_count: %d", $time, total_count);
+                $display("%d: @linked_fifo: %m ERROR: total_count: %d", $time, total_count);
+                $finish;
                 error = 1;
             end
         end
