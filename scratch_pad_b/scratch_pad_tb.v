@@ -212,7 +212,7 @@ module scratch_pad_tb;
         */
         //TODO: stress test all ports sequencial read
         #10000;
-        $display("stress testing writing all ports");
+        $display("stress testing sequential reading all ports");
         $display("start time: %d",$time);
         start_time=$time;
         for(i=0;i<`PORTS;i=i+1)begin
@@ -271,7 +271,7 @@ module scratch_pad_tb;
         */
         //TODO: stress test all ports random read
         #10000;
-        $display("stress testing writing all ports");
+        $display("stress testing random reading all ports");
         $display("start time: %d",$time);
         start_time=$time;
         for(i=0;i<`PORTS;i=i+1)begin
@@ -325,9 +325,11 @@ module scratch_pad_tb;
                     max_data_sent = data_sent[i];
             end
             #10;
+            /*
             if(max_data_sent > 32) begin
                 $display("trigger hit:");
             end
+            */
                 //for(i=0;i<`PORTS;i=i+1)begin
                 //    $display("data sent from port %d: %d", i, data_sent[i]);
                 //end
@@ -344,7 +346,7 @@ module scratch_pad_tb;
 
         //TODO: stress test all ports random read
         #10000;
-        $display("stress testing reading all ports");
+        $display("stress testing segregated reading all ports");
         $display("start time: %d",$time);
         start_time=$time;
         for(i=0;i<`PORTS;i=i+1)begin
@@ -425,7 +427,7 @@ module scratch_pad_tb;
         for(i = 0; i < `PORTS; i = i + 1) begin
             if(valid[i]) begin
                 if(fifo_data[i][end_ptr[i]] ==q[(`PORTS-i)*`WIDTH - 1 -: `WIDTH] ) begin
-                    $display("Woot match %d", i);
+                    //$display("Woot match %d", i);
                     //$finish;
                 end else begin
                     $display("ERROR: no match %d", i);

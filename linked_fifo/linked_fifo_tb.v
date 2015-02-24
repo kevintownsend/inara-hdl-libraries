@@ -19,10 +19,16 @@ module linked_fifo_tb;
     wire empty_gold;
     wire full_gold;
     wire [3*8-1:0] count_gold;
+    wire almost_full;
     //TODO: add free
 
-    linked_fifo #(`WIDTH, `DEPTH, `FIFOS) dut(rst, clk, push, push_fifo, pop, pop_fifo, d, q, empty, full,);
+    linked_fifo #(`WIDTH, `DEPTH, `FIFOS) dut(rst, clk, push, push_fifo, pop, pop_fifo, d, q, empty, full,,almost_full);
     linked_fifo_gold #(`WIDTH, `DEPTH, `FIFOS) gold(rst, clk, push, push_fifo, pop, pop_fifo, d, q_gold, empty_gold, full_gold,);
+
+    always @(posedge clk) begin
+        //if(almost_full)
+        //    $display("almost full");
+    end
 
     integer timeout;
     integer i;

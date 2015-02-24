@@ -27,19 +27,30 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     wire [0:PORTS-1] reorder_full, send_buffer_full, recv_min_full;
     wire [0:PORTS-1] send_buffer_almost_full, recv_min_almost_full;
 
+    wire [0:PORTS-1]linked_fifo_full;
+    wire [0:PORTS-1]linked_fifo_almost_full;
     always @* begin
-        r_full = reorder_full | send_buffer_almost_full;
+        r_full = reorder_full | linked_fifo_almost_full;
     end
     assign full = r_full;
 
     always @(posedge clk) begin
+        /*
         for(i=0;i<PORTS;i=i+1) begin
-            if(send_buffer_full[i]) begin
+            if(linked_fifo_full[i]) begin
                 $display("WARNING: %d:%m send cross bar full port %d", $time, i);
+                $display("full: %b", full);
+                $display("rd_en: %b", rd_en);
+                $display("wr_en: %b", wr_en);
                 //$finish;
             end
         end
-        /*
+        for(i=0;i<PORTS;i=i+1) begin
+            if(full[i] && (rd_en[i] || wr_en[i])) begin
+                $display("ERROR: %d:%m OVERFLOW port %d", $time, i);
+                $finish;
+            end
+        end
         for(i=0;i<PORTS;i=i+1) begin
             if(send_buffer_almost_full[i]) begin
                 $display("WARNING: %d:%m send cross bar almost full port %d", $time, i);
@@ -121,13 +132,12 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
 
     //TODO: buffer
     wire [0:PORTS-1]linked_fifo_empty;
-    wire [0:PORTS-1]linked_fifo_full;
     assign send_buffer_almost_full = linked_fifo_full; //TODO: fix
     reg [0:PORTS-1]linked_fifo_pop[0:1];
     reg [PORTS_ADDR_WIDTH-1:0] request_routing [0:PORTS-1];
     wire [WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH:0] send_buffer_stage_data[0:PORTS-1];
     generate for(g = 0; g < PORTS; g = g + 1) begin: generate_buffer
-        linked_fifo #(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1, FIFO_DEPTH, PORTS) lf(rst, clk, send_reorder_stage_data_valid[g], send_reorder_stage_data_addr_low[g], linked_fifo_pop[0][g], request_routing[g],{send_reorder_stage_data_data[g], send_reorder_stage_data_addr_high[g], send_reorder_stage_data_write[g]}, send_buffer_stage_data[g],linked_fifo_empty[g],linked_fifo_full[g],);
+        linked_fifo #(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1, FIFO_DEPTH, PORTS) lf(rst, clk, send_reorder_stage_data_valid[g], send_reorder_stage_data_addr_low[g], linked_fifo_pop[0][g], request_routing[g],{send_reorder_stage_data_data[g], send_reorder_stage_data_addr_high[g], send_reorder_stage_data_write[g]}, send_buffer_stage_data[g],linked_fifo_empty[g],linked_fifo_full[g],,linked_fifo_almost_full[g]);
     end
     endgenerate
 
@@ -144,7 +154,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     end
     always @(posedge clk) begin
         for(i = 0; i < PORTS; i = i + 1) begin
-            request_routing[i] <= i | rr_counter;
+            request_routing[i] <= i ^ rr_counter;
         end
     end
     always @*
