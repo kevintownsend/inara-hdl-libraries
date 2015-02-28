@@ -72,7 +72,11 @@ module reorder_queue(rst, clk, increment, index_tag, full, wr_en, d, q, valid, s
             occupency_array_d = d[D_INDEX_LOCATION+ADDR_DEPTH_WIDTH];
             occupency_array_addr_a = d[D_INDEX_LOCATION+ADDR_DEPTH_WIDTH-1:D_INDEX_LOCATION];
             occupency_array_wr_en = wr_en;
-        end 
+        end else begin
+            occupency_array_d = 1;
+            occupency_array_addr_a = end_ptr;
+            occupency_array_wr_en = 0;
+        end
     end
     assign index_tag = end_ptr;
     assign full = (beg_ptr[ADDR_DEPTH_WIDTH-1:0] == end_ptr[ADDR_DEPTH_WIDTH-1:0]) && (beg_ptr[ADDR_DEPTH_WIDTH] != end_ptr[ADDR_DEPTH_WIDTH]);

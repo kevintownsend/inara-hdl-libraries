@@ -43,7 +43,7 @@ module arbiter(rst, clk, push, d, full, q, stall, valid, almost_full);
     always @* begin
         pop = 0;
         next_processing = processing;
-        if(!empty[processing])
+        if(!empty[processing] && !stall)
             pop[processing] = 1;
         if(almost_empty[processing])
             next_processing = processing + 1;

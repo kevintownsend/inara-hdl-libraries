@@ -3,8 +3,8 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     parameter WIDTH = 64;
     parameter FRAGMENT_DEPTH = 512;
     parameter REORDER_DEPTH = 32;
-    parameter REORDER_BITS = log2(REORDER_DEPTH-1) + 1;
     parameter FIFO_DEPTH = REORDER_DEPTH;
+    parameter REORDER_BITS = log2(REORDER_DEPTH-1) + 1;
     parameter DEPTH = FRAGMENT_DEPTH * PORTS;
     parameter ADDR_WIDTH = log2(DEPTH-1);
     parameter PORTS_ADDR_WIDTH = log2(PORTS-1);
@@ -21,6 +21,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     `include "log2.vh"
     `include "constants.vh"
     integer i, j;
+    //TODO: debug internal stalling issue
 
     //TODO: stall logic
     reg [0:PORTS-1] r_full;
@@ -113,7 +114,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     //TODO: memory stalls
     wire [PORTS-1:0]stall_tmp;
     assign stall_tmp = 0;
-    cross_bar #(1+ADDR_WIDTH+WIDTH, PORTS, PORTS, FIFO_DEPTH, PORTS_ADDR_WIDTH, PORTS_ADDR_WIDTH, 1, 2)send_cross_bar(rst, clk, send_reorder_stage_data_valid, send_reorder_stage_data_1d, send_cross_bar_full, send_cross_bar_stage_data_valid, send_cross_bar_stage_data_1d, stall_tmp, send_cross_bar_almost_full);
+    cross_bar #(1+ADDR_WIDTH+WIDTH, PORTS, PORTS, FIFO_DEPTH, PORTS_ADDR_WIDTH, PORTS_ADDR_WIDTH, 1, 2)send_cross_bar(rst, clk, send_reorder_stage_data_valid, send_reorder_stage_data_1d, send_cross_bar_full, send_cross_bar_stage_data_valid, send_cross_bar_stage_data_1d, recv_cross_bar_almost_full, send_cross_bar_almost_full);
 
     always @(posedge clk) begin
         if(|send_reorder_stage_data_valid) begin
@@ -145,7 +146,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
             for(j = 0; j < (WIDTH+REORDER_BITS+PORTS_ADDR_WIDTH); j = j + 1)
                 recv_cross_bar_stage_data[i][j+1] = recv_cross_bar_stage_data_1d[(REORDER_BITS+WIDTH+PORTS_ADDR_WIDTH)*(PORTS-i-1) + j];
         end
-    cross_bar #(REORDER_BITS+WIDTH+PORTS_ADDR_WIDTH, PORTS, PORTS, FIFO_DEPTH, PORTS_ADDR_WIDTH, PORTS_ADDR_WIDTH, 0)recv_cross_bar(rst, clk, recv_memory_stage_data_valid, recv_memory_stage_data_1d, recv_cross_bar_full, recv_cross_bar_stage_data_valid, recv_cross_bar_stage_data_1d, stall_tmp, recv_cross_bar_almost_full);
+    cross_bar #(REORDER_BITS+WIDTH+PORTS_ADDR_WIDTH, PORTS, PORTS, FIFO_DEPTH, PORTS_ADDR_WIDTH, PORTS_ADDR_WIDTH, 0, 4)recv_cross_bar(rst, clk, recv_memory_stage_data_valid, recv_memory_stage_data_1d, recv_cross_bar_full, recv_cross_bar_stage_data_valid, recv_cross_bar_stage_data_1d, stall_tmp, recv_cross_bar_almost_full);
 
     always @(posedge clk) begin
         //$display("revicrossbar: %H %H %H %H", recv_memory_stage_data_valid, recv_memory_stage_data_1d, recv_cross_bar_stage_data_valid, recv_cross_bar_stage_data_1d);

@@ -199,11 +199,11 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     end
     endgenerate
     reg [PORTS_ADDR_WIDTH-1:0] recv_min_control;
-    always @* for(i = 0; i < PORTS; i = i + 1) begin
+    always @* for(i = 0; i < PORTS_ADDR_WIDTH; i = i + 1) begin
         recv_min_control[PORTS_ADDR_WIDTH-i-1] = counter_pipeline[2+2*PORTS_ADDR_WIDTH+2*i][PORTS_ADDR_WIDTH-i-1];
     end
     wire [PORTS*(WIDTH+REORDER_BITS)-1:0]recv_min_stage_data_1d;
-    omega_network_ff #(WIDTH+REORDER_BITS) response_min(clk, recv_memory_stage_valid, recv_memory_stage_1d, recv_min_stage_valid, recv_min_stage_data_1d, recv_min_control);
+    omega_network_ff #(WIDTH+REORDER_BITS,PORTS) response_min(clk, recv_memory_stage_valid, recv_memory_stage_1d, recv_min_stage_valid, recv_min_stage_data_1d, recv_min_control);
     always @* for(i = 0; i < PORTS; i = i + 1) begin
         recv_min_stage_data[i] = recv_min_stage_data_1d[(i+1)*(WIDTH+REORDER_BITS)-1 -: WIDTH+REORDER_BITS];
     end

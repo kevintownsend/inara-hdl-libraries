@@ -51,7 +51,6 @@ module linked_fifo(rst, clk, push, push_fifo, pop, pop_fifo, d, q, empty, full, 
     always @(posedge clk) begin
         if(state != `STEADY) begin
             free_count <= DEPTH-FIFOS;
-            $display("wtf: %d", free_count);
         end else if(pop & push) begin
         end else if(pop) begin
             free_count <= free_count + 1;
@@ -202,6 +201,7 @@ module linked_fifo(rst, clk, push, push_fifo, pop, pop_fifo, d, q, empty, full, 
 
     //debug
     //synthesis off
+    /*
     //TODO: print last 8 clock cycles.
     integer prev_buffer_ptr;
     initial prev_buffer_ptr = 0;
@@ -258,6 +258,7 @@ module linked_fifo(rst, clk, push, push_fifo, pop, pop_fifo, d, q, empty, full, 
     always @(posedge clk) begin
         if(full && push) begin
             $display("%m ERROR: OVERFLOW");
+            $finish;
         end
         prev_state <= state;
         if(prev_state != state) begin
@@ -281,7 +282,6 @@ module linked_fifo(rst, clk, push, push_fifo, pop, pop_fifo, d, q, empty, full, 
                 $display("free count mismatch %m");
                 $display("debug: %d", debug_free_count);
                 $display("free: %d", free_count);
-                $display("wtf: %d", DEPTH-FIFOS);
                 $finish;
             end
             total_count = debug_free_count + total_count;
@@ -306,6 +306,7 @@ module linked_fifo(rst, clk, push, push_fifo, pop, pop_fifo, d, q, empty, full, 
             end
         end
     end
+    */
     //sythesis on
     `include "log2.vh"
 
