@@ -62,5 +62,8 @@ check : work $(compile_scratch_pad) $(compile_scratch_pad_tb)
 synthesis :
 	xst -ifn scratch_pad.xst > xst.out
 
+tcl :
+	vivado -mode tcl < compile.tcl
+
 clean :
 	rm -rf work transcript *.lso *.out *.ngc *.xrpt *.srp _xmsgs xst

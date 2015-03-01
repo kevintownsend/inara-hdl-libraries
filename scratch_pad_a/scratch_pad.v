@@ -1,7 +1,7 @@
 module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     parameter PORTS = 8;
-    parameter WIDTH = 64;
-    parameter FRAGMENT_DEPTH = 512;
+    parameter WIDTH = 16;
+    parameter FRAGMENT_DEPTH = 32;
     parameter REORDER_DEPTH = 32;
     parameter FIFO_DEPTH = REORDER_DEPTH;
     parameter REORDER_BITS = log2(REORDER_DEPTH-1) + 1;

@@ -56,3 +56,6 @@ synthesis :
 
 clean :
 	rm -rf work transcript *.lso *.out *.ngc *.xrpt *.srp _xmsgs xst
+
+tcl:
+	vivado -mode tcl < compile.tcl
