@@ -1,1 +1,1 @@
-run -ifn scratch_pad.prj -ifmt mixed -top scratch_pad -ofn scratch_pad.ngc -ofmt NGC -p xc5vlx330-2 -opt_mode Speed -opt_level 1
+run -ifn scratch_pad.prj -ifmt mixed -top scratch_pad -ofn scratch_pad.ngc -iobuf NO -bufg 0 -iob false -ofmt NGC -p xc5vlx330-2 -bram_utilization_ratio -1 -generics {WIDTH=64 | PORTS=4 | REORDER_DEPTH=512} -opt_mode Speed -opt_level 1
