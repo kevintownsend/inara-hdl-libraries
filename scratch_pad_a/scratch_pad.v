@@ -3,8 +3,8 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     parameter WIDTH = 64;
     parameter FRAGMENT_DEPTH = 512;
     parameter REORDER_DEPTH = 32;
+    parameter FIFO_DEPTH = 32;
     parameter REORDER_BITS = log2(REORDER_DEPTH-1) + 1;
-    parameter FIFO_DEPTH = REORDER_DEPTH;
     parameter DEPTH = FRAGMENT_DEPTH * PORTS;
     parameter ADDR_WIDTH = log2(DEPTH-1);
     parameter PORTS_ADDR_WIDTH = log2(PORTS-1);
@@ -13,7 +13,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     input [0:PORTS-1] rd_en;
     input [0:PORTS-1] wr_en;
     input [WIDTH*PORTS-1:0] d;
-    output reg [WIDTH*PORTS-1:0] q;
+    output [WIDTH*PORTS-1:0] q;
     input [ADDR_WIDTH*PORTS-1:0] addr;
     output [0:PORTS-1] full;
     input [0:PORTS-1]stall;
@@ -21,6 +21,8 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     `include "log2.vh"
     `include "constants.vh"
     integer i, j;
+    genvar g;
+    //TODO: debug internal stalling issue
 
     //TODO: stall logic
     reg [0:PORTS-1] r_full;
@@ -67,22 +69,22 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
         end
     //output 
     wire [WIDTH+REORDER_BITS-1:0] recv_reorder_stage_data [0:PORTS-1];
-    always @*
-        for(i = 0; i < PORTS; i = i + 1)
-            for(j = 0; j < WIDTH; j = j + 1)
-                q[(PORTS-i-1)*WIDTH+j] = recv_reorder_stage_data[i][j+REORDER_BITS];
+    generate
+        for(g = 0; g < PORTS; g = g + 1) begin: generate_recv_reorder_ports
+            assign q[(PORTS-g)*WIDTH -:WIDTH] = recv_reorder_stage_data[g][WIDTH+REORDER_BITS-1 -:WIDTH];
+            end
+    endgenerate
 
     //reorder
-    genvar g;
-    reg [2+ADDR_WIDTH+WIDTH-1:0] send_reorder_stage_data[0:PORTS-1];
-    reg [0:PORTS-1] send_reorder_stage_data_valid;
+    wire [2+ADDR_WIDTH+WIDTH-1:0] send_reorder_stage_data[0:PORTS-1];
+    wire [0:PORTS-1] send_reorder_stage_data_valid;
     reg [PORTS*(ADDR_WIDTH+WIDTH+1)-1:0] send_reorder_stage_data_1d;
-    always @*
-        for(i = 0; i < PORTS; i = i + 1)begin
-            send_reorder_stage_data_valid[i] = send_reorder_stage_data[i][0];
-            for(j = 0; j < (2+ADDR_WIDTH+WIDTH-1); j = j + 1)
-                send_reorder_stage_data_1d[(1+ADDR_WIDTH+WIDTH)*(PORTS-i-1) + j] = send_reorder_stage_data[i][j+1];
+    generate
+        for(g = 0; g < PORTS; g = g + 1)begin: generate_send_reorder
+            assign send_reorder_stage_data_valid[i] = send_reorder_stage_data[i][0];
+            assign send_reorder_stage_data_1d[(1+ADDR_WIDTH+WIDTH)*(PORTS-i) -: 1+ADDR_WIDTH+WIDTH] = send_reorder_stage_data[i][ADDR_WIDTH+WIDTH+1:1];
         end
+    endgenerate
     reg [WIDTH+REORDER_BITS+PORTS_ADDR_WIDTH+1-1:0]recv_cross_bar_stage_data[0:PORTS-1];
     wire [REORDER_BITS-1:0] index_tag [0:PORTS-1];
     generate for(g = 0; g < PORTS; g = g + 1) begin: generate_reorder
@@ -113,7 +115,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     //TODO: memory stalls
     wire [PORTS-1:0]stall_tmp;
     assign stall_tmp = 0;
-    cross_bar #(1+ADDR_WIDTH+WIDTH, PORTS, PORTS, FIFO_DEPTH, PORTS_ADDR_WIDTH, PORTS_ADDR_WIDTH, 1, 2)send_cross_bar(rst, clk, send_reorder_stage_data_valid, send_reorder_stage_data_1d, send_cross_bar_full, send_cross_bar_stage_data_valid, send_cross_bar_stage_data_1d, stall_tmp, send_cross_bar_almost_full);
+    cross_bar #(1+ADDR_WIDTH+WIDTH, PORTS, PORTS, FIFO_DEPTH, PORTS_ADDR_WIDTH, PORTS_ADDR_WIDTH, 1, 2)send_cross_bar(rst, clk, send_reorder_stage_data_valid, send_reorder_stage_data_1d, send_cross_bar_full, send_cross_bar_stage_data_valid, send_cross_bar_stage_data_1d, recv_cross_bar_almost_full, send_cross_bar_almost_full);
 
     always @(posedge clk) begin
         if(|send_reorder_stage_data_valid) begin
@@ -145,7 +147,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
             for(j = 0; j < (WIDTH+REORDER_BITS+PORTS_ADDR_WIDTH); j = j + 1)
                 recv_cross_bar_stage_data[i][j+1] = recv_cross_bar_stage_data_1d[(REORDER_BITS+WIDTH+PORTS_ADDR_WIDTH)*(PORTS-i-1) + j];
         end
-    cross_bar #(REORDER_BITS+WIDTH+PORTS_ADDR_WIDTH, PORTS, PORTS, FIFO_DEPTH, PORTS_ADDR_WIDTH, PORTS_ADDR_WIDTH, 0)recv_cross_bar(rst, clk, recv_memory_stage_data_valid, recv_memory_stage_data_1d, recv_cross_bar_full, recv_cross_bar_stage_data_valid, recv_cross_bar_stage_data_1d, stall_tmp, recv_cross_bar_almost_full);
+    cross_bar #(REORDER_BITS+WIDTH+PORTS_ADDR_WIDTH, PORTS, PORTS, FIFO_DEPTH, PORTS_ADDR_WIDTH, PORTS_ADDR_WIDTH, 0, 4)recv_cross_bar(rst, clk, recv_memory_stage_data_valid, recv_memory_stage_data_1d, recv_cross_bar_full, recv_cross_bar_stage_data_valid, recv_cross_bar_stage_data_1d, stall_tmp, recv_cross_bar_almost_full);
 
     always @(posedge clk) begin
         //$display("revicrossbar: %H %H %H %H", recv_memory_stage_data_valid, recv_memory_stage_data_1d, recv_cross_bar_stage_data_valid, recv_cross_bar_stage_data_1d);

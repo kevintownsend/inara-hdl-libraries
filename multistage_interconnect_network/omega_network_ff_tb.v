@@ -15,10 +15,11 @@ module omega_network_ff_tb;
 
     initial begin
         clk = 0;
-        forever #5 clk~=clk;
+        forever #5 clk=~clk;
     end
     reg rst;
-    integer i;
+    integer i, j;
+    integer si;
     reg [WIDTH-1:0] d_in_2d [0:IN_PORTS];
     reg [WIDTH-1:0] d_out_2d [0:IN_PORTS];
     always @* begin
@@ -27,33 +28,53 @@ module omega_network_ff_tb;
             d_out_2d[i] = d_out[(i+1)*WIDTH-1 -: WIDTH];
         end
     end
+    reg count_rst;
+    reg [ADDR_WIDTH_PORTS-1:0] count[0:2*ADDR_WIDTH_PORTS];
     initial begin
         push = 0;
         rst = 1;
         for(i = 0; i < IN_PORTS; i = i + 1) begin
             d_in_2d[i] = i;
         end
-        control = 0;
+        count_rst = 1;
         //TODO: wait correct amount of time
         #101 rst = 0;
-        valid = -1;
-        #10 valid = 0;
-        #1000 $display("NO ERRORS BITCH");
+        push = -1;
+        #10 push = 0;
+        #1000 count_rst = 0;
+        #10 push = -1;
+        for(si = 0; si < IN_PORTS; si = si + 1) begin
+            $display("here");
+            #10;
+        end
+        push = 0;
+        #1000 $display("NO ERRORS");
         $finish;
+    end
+    always @(posedge clk) begin
+        for(j = 0; j < ADDR_WIDTH_PORTS; j = j + 1) begin
+            control[ADDR_WIDTH_PORTS-j-1] = count[j*2][j];
+        end
     end
     always @(posedge clk) begin
         if(!rst) begin
             for(i = 0; i < IN_PORTS; i = i + 1) begin
                 if(valid[i]) begin
-                    if(d_out_2d[i] == i) begin
-                        $display("woot match");
-                    end else begin
-                        $display("epic fail");
-                    end
+                    $display("port: %d data: %d", i, d_out_2d[i]);
                 end
             end
         end
-        #10;
     end
 
+
+    always @(posedge clk) begin
+        if(count_rst)
+            count[0] <= 0;
+         else
+            count[0] <= count[0] + 1;
+         for(i = 0; i < 2*ADDR_WIDTH_PORTS; i = i + 1)
+            count[i+1] <= count[i];
+    end
+
+    `include "log2.vh"
 endmodule

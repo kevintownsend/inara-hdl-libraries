@@ -22,7 +22,7 @@ module omega_network_ff(clk, push, d_in, valid, d_out, control);
         end
         for(g1 = 0; g1 < ADDR_WIDTH_PORTS; g1 = g1 + 1) begin: generate_stage
             for(g2 = 0; g2 < IN_PORTS/2; g2 = g2 + 1) begin: generate_switch
-                basic_switch_ff #(WIDTH+1) sw(stage[g1][g2], stage[g1][g2+IN_PORTS/2], stage[g1+1][g2*2], stage[g1+1][g2*2+1], control[ADDR_WIDTH_PORTS-1-g1]);
+                basic_switch_ff #(WIDTH+1) sw(clk, stage[g1][g2], stage[g1][g2+IN_PORTS/2], stage[g1+1][g2*2], stage[g1+1][g2*2+1], control[ADDR_WIDTH_PORTS-1-g1]);
             end
         end
         for(g1 = 0; g1 < IN_PORTS; g1 = g1 + 1) begin: generate_end

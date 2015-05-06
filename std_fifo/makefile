@@ -7,5 +7,8 @@ synth :
 include xst.mk
 include vsim.mk
 
+tcl :
+	vivado -mode tcl < compile.tcl
+
 clean :
 	rm -rf *.vvp
