@@ -10,6 +10,7 @@ work :
 compile_scratch_pad = work/scratch_pad
 
 compile_scratch_pad_tb = work/scratch_pad_tb
+compile_scratch_pad_tb2 = work/scratch_pad_tb2
 
 compile_reorder_queue = work/reorder_queue
 
@@ -25,6 +26,7 @@ compile_scratch_pad_gold = work/scratch_pad_gold
 
 scratch_pad : $(compile_scratch_pad)
 scratch_pad_tb : $(compile_scratch_pad_tb)
+scratch_pad_tb2 : $(compile_scratch_pad_tb2)
 reorder_queue : $(compile_reorder_queue)
 cross_bar : $(compile_cross_bar)
 std_fifo : $(compile_std_fifo)
@@ -38,6 +40,8 @@ $(compile_scratch_pad) : scratch_pad.v $(compile_cross_bar) $(compile_reorder_qu
 $(compile_scratch_pad_tb) : scratch_pad_tb.v $(compile_scratch_pad_gold)
 	vlog -work work scratch_pad_tb.v +incdir+./..
 
+$(compile_scratch_pad_tb2) : scratch_pad_tb2.v $(compile_scratch_pad_gold)
+	vlog -work work scratch_pad_tb2.v +incdir+./..
 $(compile_reorder_queue) : ../reorder_queue/reorder_queue.v $(compile_arbiter)
 	vlog -work work ../reorder_queue/reorder_queue.v +incdir+./..
 
@@ -59,11 +63,14 @@ $(compile_scratch_pad_gold) : ../scratch_pad_gold/scratch_pad_gold.v
 check : work $(compile_scratch_pad) $(compile_scratch_pad_tb)
 	vsim < test.do
 
+check2 : work $(compile_scratch_pad) $(compile_scratch_pad_tb2)
+	echo -e "vsim work.scratch_pad_tb\nrun -all" | vsim
+
 synthesis :
-	xst -ifn scratch_pad.xst > xst.out
+	echo "run -ifn scratch_pad.prj -ifmt mixed -top scratch_pad -ofn scratch_pad.ngc -ofmt NGC -p xc7v2000t -iobuf NO -bufg 0 -iob false -bram_utilization_ratio 4# -generics {WIDTH=64 | PORTS=4 | REORDER_DEPTH=64} -opt_mode Speed -opt_level 1 -vlgincdir ../." | xst > xst.out
 
 tcl :
 	vivado -mode tcl < compile.tcl
 
 clean :
-	rm -rf work transcript *.lso *.out *.ngc *.xrpt *.srp _xmsgs xst
+	rm -rf work transcript *.lso *.out *.ngc *.xrpt *.srp _xmsgs xst *.log *.jou vivado

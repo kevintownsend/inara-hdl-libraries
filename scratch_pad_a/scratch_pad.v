@@ -35,6 +35,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
         r_full = reorder_full | send_cross_bar_almost_full;
     end
     assign full = r_full;
+    /*
     always @(posedge clk) begin
         for(i=0;i<PORTS;i=i+1) begin
             if(send_cross_bar_full[i]) begin
@@ -42,7 +43,6 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
                 //$finish;
             end
         end
-        /*
         for(i=0;i<PORTS;i=i+1) begin
             if(send_cross_bar_almost_full[i]) begin
                 $display("WARNING: %d:%m send cross bar almost full port %d", $time, i);
@@ -56,8 +56,8 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
                 $finish;
             end
         end
-        */
     end
+    */
     //input
     reg [WIDTH+ADDR_WIDTH-1:0] send_input_stage_data [0:PORTS-1];
     always @*
@@ -71,18 +71,18 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     wire [WIDTH+REORDER_BITS-1:0] recv_reorder_stage_data [0:PORTS-1];
     generate
         for(g = 0; g < PORTS; g = g + 1) begin: generate_recv_reorder_ports
-            assign q[(PORTS-g)*WIDTH -:WIDTH] = recv_reorder_stage_data[g][WIDTH+REORDER_BITS-1 -:WIDTH];
+            assign q[(PORTS-g)*WIDTH - 1 -:WIDTH] = recv_reorder_stage_data[g][WIDTH+REORDER_BITS-1 -:WIDTH];
             end
     endgenerate
 
     //reorder
-    wire [2+ADDR_WIDTH+WIDTH-1:0] send_reorder_stage_data[0:PORTS-1];
+    reg [2+ADDR_WIDTH+WIDTH-1:0] send_reorder_stage_data[0:PORTS-1];
     wire [0:PORTS-1] send_reorder_stage_data_valid;
-    reg [PORTS*(ADDR_WIDTH+WIDTH+1)-1:0] send_reorder_stage_data_1d;
+    wire [PORTS*(ADDR_WIDTH+WIDTH+1)-1:0] send_reorder_stage_data_1d;
     generate
         for(g = 0; g < PORTS; g = g + 1)begin: generate_send_reorder
-            assign send_reorder_stage_data_valid[i] = send_reorder_stage_data[i][0];
-            assign send_reorder_stage_data_1d[(1+ADDR_WIDTH+WIDTH)*(PORTS-i) -: 1+ADDR_WIDTH+WIDTH] = send_reorder_stage_data[i][ADDR_WIDTH+WIDTH+1:1];
+            assign send_reorder_stage_data_valid[g] = send_reorder_stage_data[g][0];
+            assign send_reorder_stage_data_1d[(1+ADDR_WIDTH+WIDTH)*(PORTS-g) - 1 -: 1+ADDR_WIDTH+WIDTH] = send_reorder_stage_data[g][ADDR_WIDTH+WIDTH+1:1];
         end
     endgenerate
     reg [WIDTH+REORDER_BITS+PORTS_ADDR_WIDTH+1-1:0]recv_cross_bar_stage_data[0:PORTS-1];
