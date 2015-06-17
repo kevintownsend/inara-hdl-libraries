@@ -10,5 +10,5 @@ include vsim.mk
 tcl :
 	vivado -mode tcl < compile.tcl
 
-clean :
-	rm -rf *.vvp
+clean : cleanVsim cleanXst
+	rm -rf work transcript *.vvp *.lso *.out *.ngc *.xrpt *.srp _xmsgs xst *.log *.jou vivado
