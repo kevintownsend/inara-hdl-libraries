@@ -74,3 +74,8 @@ tcl :
 
 clean :
 	rm -rf work transcript *.lso *.out *.ngc *.xrpt *.srp _xmsgs xst *.log *.jou vivado
+
+vim:
+	vim -p makefile compile.tcl
+
+
