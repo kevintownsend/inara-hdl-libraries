@@ -3,7 +3,7 @@ sim :
 	std_fifo_tb.vvp
 
 log2.vh :
-	cp ../common/log2.vh .
+	cp ../log2.vh .
 
 
 include xst.mk

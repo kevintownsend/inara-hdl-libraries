@@ -7,6 +7,9 @@ sim :
 work :
 	vlib work
 
+common.vh :
+	cp ../../common/common.vh .
+
 compile_scratch_pad = work/scratch_pad
 
 compile_scratch_pad_tb = work/scratch_pad_tb
@@ -69,13 +72,14 @@ check2 : work $(compile_scratch_pad) $(compile_scratch_pad_tb2)
 synthesis :
 	echo "run -ifn scratch_pad.prj -ifmt mixed -top scratch_pad -ofn scratch_pad.ngc -ofmt NGC -p xc7v2000t -iobuf NO -bufg 0 -iob false -bram_utilization_ratio 4# -generics {WIDTH=64 | PORTS=4 | REORDER_DEPTH=64} -opt_mode Speed -opt_level 1 -vlgincdir ../." | xst > xst.out
 
-tcl :
+tcl : common.vh
 	vivado -mode tcl < compile.tcl
 
 clean :
 	rm -rf work transcript *.lso *.out *.ngc *.xrpt *.srp _xmsgs xst *.log *.jou vivado
 
 vim:
-	vim -p makefile compile.tcl
+	vim -p makefile compile.tcl scratch_pad_synthesis.v scratch_pad.v
+
 
 
