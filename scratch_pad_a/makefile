@@ -66,6 +66,10 @@ $(compile_scratch_pad_gold) : ../scratch_pad_gold/scratch_pad_gold.v
 check : work $(compile_scratch_pad) $(compile_scratch_pad_tb)
 	vsim < test.do
 
+checkSynth : work $(compile_scratch_pad) $(compile_scratch_pad_tb)
+	vlog -work work vivado/cpu_impl_netlist.v +incdir+./..
+	vsim < test.do
+
 check2 : work $(compile_scratch_pad) $(compile_scratch_pad_tb2)
 	echo -e "vsim work.scratch_pad_tb\nrun -all" | vsim
 
