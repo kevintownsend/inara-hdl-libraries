@@ -1,6 +1,6 @@
 module reorder_queue(rst, clk, increment, index_tag, full, wr_en, d, q, valid, stall);
-    parameter WIDTH = 8;
-    parameter DEPTH = 32;
+    parameter WIDTH = 64;
+    parameter DEPTH = 64;
     parameter D_INDEX_LOCATION = 0;
     parameter ADDR_DEPTH_WIDTH = log2(DEPTH-1);
     input rst, clk;
@@ -37,8 +37,8 @@ module reorder_queue(rst, clk, increment, index_tag, full, wr_en, d, q, valid, s
         if(wr_en)
             ram[d[ADDR_DEPTH_WIDTH+D_INDEX_LOCATION-1:D_INDEX_LOCATION]] <= d;
         q <= ram[beg_ptr[ADDR_DEPTH_WIDTH-1:0]];
-    end 
-    
+    end
+
     //TODO: use beg_ptr as part of reset
 
     always @(posedge clk) begin
