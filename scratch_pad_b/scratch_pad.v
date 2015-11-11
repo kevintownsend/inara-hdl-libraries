@@ -137,7 +137,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     reg [PORTS_ADDR_WIDTH-1:0] request_routing [0:PORTS-1];
     wire [WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH:0] send_buffer_stage_data[0:PORTS-1];
     generate for(g = 0; g < PORTS; g = g + 1) begin: generate_buffer
-        linked_fifo #(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1, FIFO_DEPTH, PORTS) lf(rst, clk, send_reorder_stage_data_valid[g], send_reorder_stage_data_addr_low[g], linked_fifo_pop[0][g], request_routing[g],{send_reorder_stage_data_data[g], send_reorder_stage_data_addr_high[g], send_reorder_stage_data_write[g]}, send_buffer_stage_data[g],linked_fifo_empty[g],linked_fifo_full[g],,linked_fifo_almost_full[g]);
+        linked_list_fifo #(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1, FIFO_DEPTH, PORTS) lf(rst, clk, send_reorder_stage_data_valid[g], send_reorder_stage_data_addr_low[g], linked_fifo_pop[0][g], request_routing[g],{send_reorder_stage_data_data[g], send_reorder_stage_data_addr_high[g], send_reorder_stage_data_write[g]}, send_buffer_stage_data[g],linked_fifo_empty[g],linked_fifo_full[g],,linked_fifo_almost_full[g], );
     end
     endgenerate
 
