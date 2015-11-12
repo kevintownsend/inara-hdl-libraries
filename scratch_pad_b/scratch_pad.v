@@ -137,7 +137,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     reg [PORTS_ADDR_WIDTH-1:0] request_routing [0:PORTS-1];
     wire [WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH:0] send_buffer_stage_data[0:PORTS-1];
     generate for(g = 0; g < PORTS; g = g + 1) begin: generate_buffer
-        linked_list_fifo #(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1, FIFO_DEPTH, PORTS) lf(rst, clk, send_reorder_stage_data_valid[g], send_reorder_stage_data_addr_low[g], linked_fifo_pop[0][g], request_routing[g],{send_reorder_stage_data_data[g], send_reorder_stage_data_addr_high[g], send_reorder_stage_data_write[g]}, send_buffer_stage_data[g],linked_fifo_empty[g],linked_fifo_full[g],,linked_fifo_almost_full[g], );
+        linked_list_fifo #(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1, FIFO_DEPTH, PORTS, 0) lf(rst, clk, send_reorder_stage_data_valid[g], send_reorder_stage_data_addr_low[g], linked_fifo_pop[0][g], request_routing[g],{send_reorder_stage_data_data[g], send_reorder_stage_data_addr_high[g], send_reorder_stage_data_write[g]}, send_buffer_stage_data[g],linked_fifo_empty[g],linked_fifo_full[g],,linked_fifo_almost_full[g], );
     end
     endgenerate
 
@@ -147,15 +147,21 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     always @(posedge clk) begin
         if(rst) begin
             rr_counter <= 0;
-        end else
+            for(i = 0; i < PORTS; i = i + 1)
+                rr_counter_fat[i] <= 0;
+        end else begin
             rr_counter <= rr_counter + 1;
+            for(i = 0; i < PORTS; i = i + 1)
+                rr_counter_fat[i] <= rr_counter_fat[i] + 1;
+        end
         counter_pipeline[0] <= rr_counter;
         for(i = 0; i < 2*2*PORTS_ADDR_WIDTH; i = i + 1)
             counter_pipeline[i+1] <= counter_pipeline[i];
     end
     always @(posedge clk) begin
         for(i = 0; i < PORTS; i = i + 1) begin
-            request_routing[i] <= i ^ rr_counter;
+            //request_routing[i] <= i ^ rr_counter;
+            request_routing[i] <= i ^ rr_counter_fat[i];
         end
     end
     always @*
