@@ -1,0 +1,3 @@
+[submodule "linked_list_fifo"]
+	path = linked_list_fifo
+	url = git@github.com:kevintownsend/linked_list_fifo.git

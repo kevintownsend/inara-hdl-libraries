@@ -142,11 +142,12 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     endgenerate
 
     reg [PORTS_ADDR_WIDTH-1:0] rr_counter;
+    reg [PORTS_ADDR_WIDTH-1:0] rr_counter_fat[0:PORTS - 1];
     reg [PORTS_ADDR_WIDTH-1:0] counter_pipeline[0:2*2*PORTS_ADDR_WIDTH];
     always @(posedge clk) begin
-        if(rst)
+        if(rst) begin
             rr_counter <= 0;
-        else
+        end else
             rr_counter <= rr_counter + 1;
         counter_pipeline[0] <= rr_counter;
         for(i = 0; i < 2*2*PORTS_ADDR_WIDTH; i = i + 1)
