@@ -22,6 +22,10 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
 
     integer i, j;
 
+    reg r_rst;
+    always @(posedge clk)
+        r_rst <= rst;
+
     //TODO: stall logic
     reg [0:PORTS-1] r_full;
     wire [0:PORTS-1] reorder_full, send_buffer_full, recv_min_full;
@@ -105,7 +109,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     wire [0:PORTS-1] recv_min_stage_valid;
     wire [REORDER_BITS-1:0] index_tag [0:PORTS-1];
     generate for(g = 0; g < PORTS; g = g + 1) begin: generate_reorder
-        reorder_queue #(WIDTH+REORDER_BITS, REORDER_DEPTH) rq(rst, clk, rd_en[g], index_tag[g], reorder_full[g], recv_min_stage_valid[g], recv_min_stage_data[g], recv_reorder_stage_data[g], valid[g], stall[g]);
+        reorder_queue #(WIDTH+REORDER_BITS, REORDER_DEPTH) rq(r_rst, clk, rd_en[g], index_tag[g], reorder_full[g], recv_min_stage_valid[g], recv_min_stage_data[g], recv_reorder_stage_data[g], valid[g], stall[g]);
     end
     endgenerate
     /*
@@ -132,40 +136,49 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
 
     //TODO: buffer
     wire [0:PORTS-1]linked_fifo_empty;
+    wire [0:PORTS-1]lf_empty_check;
     assign send_buffer_almost_full = linked_fifo_full; //TODO: fix
     reg [0:PORTS-1]linked_fifo_pop[0:1];
     reg [PORTS_ADDR_WIDTH-1:0] request_routing [0:PORTS-1];
+    reg [PORTS_ADDR_WIDTH - 1:0] request_routing_check [0:PORTS - 1];
     wire [WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH:0] send_buffer_stage_data[0:PORTS-1];
+    localparam LOG2_FIFO_DEPTH = log2(FIFO_DEPTH - 1);
+    wire [PORTS * LOG2_FIFO_DEPTH - 1:0] lf_count [0:PORTS - 1];
+
     generate for(g = 0; g < PORTS; g = g + 1) begin: generate_buffer
-        linked_list_fifo #(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1, FIFO_DEPTH, PORTS, 0) lf(rst, clk, send_reorder_stage_data_valid[g], send_reorder_stage_data_addr_low[g], linked_fifo_pop[0][g], request_routing[g],{send_reorder_stage_data_data[g], send_reorder_stage_data_addr_high[g], send_reorder_stage_data_write[g]}, send_buffer_stage_data[g],linked_fifo_empty[g],linked_fifo_full[g],,linked_fifo_almost_full[g], );
+        linked_list_fifo #(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1, FIFO_DEPTH, PORTS, 1, 1, 0, 0) lf(r_rst, clk, send_reorder_stage_data_valid[g], send_reorder_stage_data_addr_low[g], linked_fifo_pop[0][g], request_routing[g],{send_reorder_stage_data_data[g], send_reorder_stage_data_addr_high[g], send_reorder_stage_data_write[g]}, send_buffer_stage_data[g],linked_fifo_empty[g],linked_fifo_full[g], lf_count[g],linked_fifo_almost_full[g], , request_routing_check[g], lf_empty_check[g]);
     end
     endgenerate
 
+    localparam COUNTER_LL_STAGES = 1;
     reg [PORTS_ADDR_WIDTH-1:0] rr_counter;
     reg [PORTS_ADDR_WIDTH-1:0] rr_counter_fat[0:PORTS - 1];
-    reg [PORTS_ADDR_WIDTH-1:0] counter_pipeline[0:2*2*PORTS_ADDR_WIDTH];
+    reg [PORTS_ADDR_WIDTH-1:0] counter_pipeline[0:COUNTER_LL_STAGES + 2*2*PORTS_ADDR_WIDTH];
+    initial begin
+        rr_counter = 0;
+        for(i = 0; i < PORTS; i = i + 1)
+            rr_counter_fat[i] = 0;
+    end
     always @(posedge clk) begin
-        if(rst) begin
-            rr_counter <= 0;
-            for(i = 0; i < PORTS; i = i + 1)
-                rr_counter_fat[i] <= 0;
-        end else begin
-            rr_counter <= rr_counter + 1;
-            for(i = 0; i < PORTS; i = i + 1)
-                rr_counter_fat[i] <= rr_counter_fat[i] + 1;
-        end
+        rr_counter <= rr_counter + 1;
+        for(i = 0; i < PORTS; i = i + 1)
+            rr_counter_fat[i] <= rr_counter_fat[i] + 1;
         counter_pipeline[0] <= rr_counter;
-        for(i = 0; i < 2*2*PORTS_ADDR_WIDTH; i = i + 1)
+        for(i = 0; i < COUNTER_LL_STAGES + 2*2*PORTS_ADDR_WIDTH; i = i + 1)
             counter_pipeline[i+1] <= counter_pipeline[i];
     end
     always @(posedge clk) begin
         for(i = 0; i < PORTS; i = i + 1) begin
+            request_routing[i] <= i ^ counter_pipeline[COUNTER_LL_STAGES - 1];
             //request_routing[i] <= i ^ rr_counter;
-            request_routing[i] <= i ^ rr_counter_fat[i];
+            request_routing_check[i] <= i ^ rr_counter;
+            //request_routing[i] <= i ^ rr_counter_fat[i];
         end
     end
-    always @*
-        linked_fifo_pop[0] = ~linked_fifo_empty;
+    initial linked_fifo_pop[0] = 0;
+    initial linked_fifo_pop[1] = 0;
+    always @(posedge clk)
+        linked_fifo_pop[0] <= ~lf_empty_check;
     always @(posedge clk)
         linked_fifo_pop[1] <= linked_fifo_pop[0];
     //TODO: request MIN
@@ -184,7 +197,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     end
     reg[PORTS_ADDR_WIDTH-1:0]request_min_control;
     always @* for(i = 0; i < PORTS_ADDR_WIDTH; i = i + 1)
-        request_min_control[PORTS_ADDR_WIDTH-i-1] = counter_pipeline[1+2*i][PORTS_ADDR_WIDTH-i-1];
+        request_min_control[PORTS_ADDR_WIDTH-i-1] = counter_pipeline[COUNTER_LL_STAGES + 1+2*i][PORTS_ADDR_WIDTH-i-1];
     omega_network_ff #(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1,PORTS)request_min(clk,linked_fifo_pop[1],send_buffer_stage_data_1d, request_min_valid, send_min_stage_data_1d, request_min_control);
     //TODO: RAMs
     wire [WIDTH-1:0] recv_memory_stage_data[0:PORTS-1];
@@ -207,7 +220,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     endgenerate
     reg [PORTS_ADDR_WIDTH-1:0] recv_min_control;
     always @* for(i = 0; i < PORTS_ADDR_WIDTH; i = i + 1) begin
-        recv_min_control[PORTS_ADDR_WIDTH-i-1] = counter_pipeline[2+2*PORTS_ADDR_WIDTH+2*i][PORTS_ADDR_WIDTH-i-1];
+        recv_min_control[PORTS_ADDR_WIDTH-i-1] = counter_pipeline[COUNTER_LL_STAGES + 2+2*PORTS_ADDR_WIDTH+2*i][PORTS_ADDR_WIDTH-i-1];
     end
     wire [PORTS*(WIDTH+REORDER_BITS)-1:0]recv_min_stage_data_1d;
     omega_network_ff #(WIDTH+REORDER_BITS,PORTS) response_min(clk, recv_memory_stage_valid, recv_memory_stage_1d, recv_min_stage_valid, recv_min_stage_data_1d, recv_min_control);

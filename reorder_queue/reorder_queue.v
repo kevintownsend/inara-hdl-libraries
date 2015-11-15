@@ -14,6 +14,10 @@ module reorder_queue(rst, clk, increment, index_tag, full, wr_en, d, q, valid, s
     input stall;
     `include "log2.vh"
 
+    reg r_rst;
+    always @(posedge clk)
+        r_rst <= rst;
+
     reg [ADDR_DEPTH_WIDTH:0] beg_ptr, end_ptr;
 
     reg [WIDTH-1:0] ram [0:DEPTH-1];
@@ -44,7 +48,7 @@ module reorder_queue(rst, clk, increment, index_tag, full, wr_en, d, q, valid, s
     always @(posedge clk) begin
         valid <= 0;
         if(state == `RESET_STATE)begin
-            if(rst)
+            if(r_rst)
                 end_ptr <= 1;
             else if(end_ptr == 0)
                 state <= `STEADY_STATE;
@@ -59,7 +63,7 @@ module reorder_queue(rst, clk, increment, index_tag, full, wr_en, d, q, valid, s
                 beg_ptr <= beg_ptr + 1;
             end
         end
-        if(rst)
+        if(r_rst)
             state <= `RESET_STATE;
     end
 
@@ -87,7 +91,7 @@ module reorder_queue(rst, clk, increment, index_tag, full, wr_en, d, q, valid, s
         end
         if(full && increment) begin
             $display("ERROR: %d, %m OVERFLOW", $time);
-            $finish;
+            //$finish;
         end
     end
 endmodule

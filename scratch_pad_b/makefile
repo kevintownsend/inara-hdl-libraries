@@ -1,5 +1,8 @@
 all : work scratch_pad scratch_pad_tb reorder_queue
 
+vim:
+	vim -p makefile ../linked_list_fifo/linked_list_fifo.v scratch_pad.v
+
 work :
 	source ~/Xilinx_Env
 	vlib work
