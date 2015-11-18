@@ -56,7 +56,7 @@ check : all $(compile_linked_list_fifo)
 	echo -e "vsim work.scratch_pad_tb\nrun -all" | vsim
 
 xst : scratch_pad.prj
-	echo "run -ifn scratch_pad.prj -ifmt mixed -top scratch_pad -ofn scratch_pad.ngc -ofmt NGC -p xc7v2000t -iobuf NO -bufg 0 -iob false -bram_utilization_ratio -1 -generics {WIDTH=64 | PORTS=16 | REORDER_DEPTH=64} -opt_mode Speed -opt_level 1 -vlgincdir ../." | xst > xst.out
+	echo "run -ifn scratch_pad.prj -ifmt mixed -top scratch_pad -ofn scratch_pad.ngc -ofmt NGC -p xc6vlx760 -iobuf NO -bufg 0 -iob false -bram_utilization_ratio -1 -generics {WIDTH=64 | PORTS=16 | REORDER_DEPTH=64} -opt_mode Speed -opt_level 1 -vlgincdir ../." | xst > xst.out
 
 rexst : cleanXst xst
 

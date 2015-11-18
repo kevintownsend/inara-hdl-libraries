@@ -138,7 +138,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     wire [0:PORTS-1]linked_fifo_empty;
     wire [0:PORTS-1]lf_empty_check;
     assign send_buffer_almost_full = linked_fifo_full; //TODO: fix
-    reg [0:PORTS-1]linked_fifo_pop[0:1];
+    reg [0:PORTS-1]linked_fifo_pop[0:3];
     reg [PORTS_ADDR_WIDTH-1:0] request_routing [0:PORTS-1];
     reg [PORTS_ADDR_WIDTH - 1:0] request_routing_check [0:PORTS - 1];
     wire [WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH:0] send_buffer_stage_data[0:PORTS-1];
@@ -151,9 +151,11 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     endgenerate
 
     localparam COUNTER_LL_STAGES = 1;
+    localparam SEND_MIN_STAGES = 2;
     reg [PORTS_ADDR_WIDTH-1:0] rr_counter;
     reg [PORTS_ADDR_WIDTH-1:0] rr_counter_fat[0:PORTS - 1];
-    reg [PORTS_ADDR_WIDTH-1:0] counter_pipeline[0:COUNTER_LL_STAGES + 2*2*PORTS_ADDR_WIDTH];
+    //reg [PORTS_ADDR_WIDTH-1:0] rr_counter_fat_pipeline[0:1][0:PORTS - 1];
+    reg [PORTS_ADDR_WIDTH-1:0] counter_pipeline[0:COUNTER_LL_STAGES + SEND_MIN_STAGES + 2*2*PORTS_ADDR_WIDTH];
     initial begin
         rr_counter = 0;
         for(i = 0; i < PORTS; i = i + 1)
@@ -164,27 +166,45 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
         for(i = 0; i < PORTS; i = i + 1)
             rr_counter_fat[i] <= rr_counter_fat[i] + 1;
         counter_pipeline[0] <= rr_counter;
-        for(i = 0; i < COUNTER_LL_STAGES + 2*2*PORTS_ADDR_WIDTH; i = i + 1)
+        for(i = 0; i < COUNTER_LL_STAGES + SEND_MIN_STAGES + 2*2*PORTS_ADDR_WIDTH; i = i + 1)
             counter_pipeline[i+1] <= counter_pipeline[i];
+        /*
+        for(i = 0; i < PORTS; i = i + 1)
+            rr_counter_fat_pipeline[0][i] <= rr_counter_fat[i];
+        for(i = 0; i < 1; i = i + 1)
+            rr_counter_fat_pipeline[i + 1] <= rr_counter_fit_pipline[i];
+        */
     end
     always @(posedge clk) begin
         for(i = 0; i < PORTS; i = i + 1) begin
-            request_routing[i] <= i ^ counter_pipeline[COUNTER_LL_STAGES - 1];
+            //request_routing[i] <= i ^ counter_pipeline[COUNTER_LL_STAGES - 1];
             //request_routing[i] <= i ^ rr_counter;
-            request_routing_check[i] <= i ^ rr_counter;
-            //request_routing[i] <= i ^ rr_counter_fat[i];
+            //request_routing_check[i] <= i ^ rr_counter;
+            request_routing_check[i] <= i ^ rr_counter_fat[i];
+            request_routing[i] <= request_routing_check[i];
+            //request_routing[i] <= rr_counter_fat_pipeline[0][i];
         end
     end
     initial linked_fifo_pop[0] = 0;
     initial linked_fifo_pop[1] = 0;
+    initial linked_fifo_pop[2] = 0;
+    initial linked_fifo_pop[3] = 0;
     always @(posedge clk)
         linked_fifo_pop[0] <= ~lf_empty_check;
-    always @(posedge clk)
+    always @(posedge clk) begin
         linked_fifo_pop[1] <= linked_fifo_pop[0];
+        linked_fifo_pop[2] <= linked_fifo_pop[1];
+        linked_fifo_pop[3] <= linked_fifo_pop[2];
+    end
     //TODO: request MIN
     reg [PORTS*(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1)-1:0]send_buffer_stage_data_1d;
+    reg [PORTS*(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1)-1:0]send_buffer_stage_data_1d_r[0:1];
     always @* for(i = 0; i < PORTS; i = i + 1)
         send_buffer_stage_data_1d[(i+1)*(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1) - 1 -: WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1] = send_buffer_stage_data[i];
+    always @(posedge clk) begin
+        send_buffer_stage_data_1d_r[0] <= send_buffer_stage_data_1d;
+        send_buffer_stage_data_1d_r[1] <= send_buffer_stage_data_1d_r[0];
+    end
     wire [PORTS*(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1)-1:0]send_min_stage_data_1d;
     reg [0:PORTS-1] send_min_stage_write;
     reg [ADDR_WIDTH-PORTS_ADDR_WIDTH-1:0] send_min_stage_addr[0:PORTS-1];
@@ -197,8 +217,8 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     end
     reg[PORTS_ADDR_WIDTH-1:0]request_min_control;
     always @* for(i = 0; i < PORTS_ADDR_WIDTH; i = i + 1)
-        request_min_control[PORTS_ADDR_WIDTH-i-1] = counter_pipeline[COUNTER_LL_STAGES + 1+2*i][PORTS_ADDR_WIDTH-i-1];
-    omega_network_ff #(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1,PORTS)request_min(clk,linked_fifo_pop[1],send_buffer_stage_data_1d, request_min_valid, send_min_stage_data_1d, request_min_control);
+        request_min_control[PORTS_ADDR_WIDTH-i-1] = counter_pipeline[COUNTER_LL_STAGES + SEND_MIN_STAGES + 1+2*i][PORTS_ADDR_WIDTH-i-1];
+    omega_network_ff #(WIDTH+ADDR_WIDTH-PORTS_ADDR_WIDTH+1,PORTS)request_min(clk,linked_fifo_pop[3],send_buffer_stage_data_1d_r[1], request_min_valid, send_min_stage_data_1d, request_min_control);
     //TODO: RAMs
     wire [WIDTH-1:0] recv_memory_stage_data[0:PORTS-1];
     reg [0:PORTS-1]recv_memory_stage_valid;
@@ -220,7 +240,7 @@ module scratch_pad(rst, clk, rd_en, wr_en, d, q, addr, stall, valid, full);
     endgenerate
     reg [PORTS_ADDR_WIDTH-1:0] recv_min_control;
     always @* for(i = 0; i < PORTS_ADDR_WIDTH; i = i + 1) begin
-        recv_min_control[PORTS_ADDR_WIDTH-i-1] = counter_pipeline[COUNTER_LL_STAGES + 2+2*PORTS_ADDR_WIDTH+2*i][PORTS_ADDR_WIDTH-i-1];
+        recv_min_control[PORTS_ADDR_WIDTH-i-1] = counter_pipeline[COUNTER_LL_STAGES + SEND_MIN_STAGES + 2+2*PORTS_ADDR_WIDTH+2*i][PORTS_ADDR_WIDTH-i-1];
     end
     wire [PORTS*(WIDTH+REORDER_BITS)-1:0]recv_min_stage_data_1d;
     omega_network_ff #(WIDTH+REORDER_BITS,PORTS) response_min(clk, recv_memory_stage_valid, recv_memory_stage_1d, recv_min_stage_valid, recv_min_stage_data_1d, recv_min_control);
