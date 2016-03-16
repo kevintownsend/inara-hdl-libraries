@@ -58,7 +58,7 @@ module reorder_queue(rst, clk, increment, index_tag, full, wr_en, d, q, valid, s
         end else if(state == `STEADY_STATE) begin
             if(increment)
                 end_ptr <= end_ptr + 1;
-            if(beg_ptr[ADDR_DEPTH_WIDTH] == occupency_array_q) begin
+            if(beg_ptr[ADDR_DEPTH_WIDTH] == occupency_array_q && !stall) begin
                 valid <= 1;
                 beg_ptr <= beg_ptr + 1;
             end
