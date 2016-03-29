@@ -2,10 +2,10 @@ module basic_switch_ff(clk, left_in, right_in, left_out, right_out, select);
     parameter WIDTH = 64;
     input clk;
     input [WIDTH-1:0] left_in, right_in;
-    output reg [WIDTH-1:0] left_out, right_out;
+    (* KEEP = "TRUE" *) output reg [WIDTH-1:0] left_out, right_out;
     input select;
 
-    reg [WIDTH-1:0] left_in_r, right_in_r;
+    (* KEEP = "TRUE" *) reg [WIDTH-1:0] left_in_r, right_in_r;
     reg select_r;
     always @(posedge clk) begin
         select_r <= select;
