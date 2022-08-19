@@ -25,7 +25,7 @@ wire [3:0] count;
 wire almost_empty;
 wire almost_full;
 
-std_fifo dut(
+std_fifo #(8, 16) dut(
     rst,
     clk,
     push,
@@ -86,7 +86,7 @@ initial begin
 
     end
     pop <= 0;
-    #10 
+    #10
     if(empty != 1)
         $display("ERROR:");
     else

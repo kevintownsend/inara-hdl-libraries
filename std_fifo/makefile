@@ -13,7 +13,10 @@ tcl : log2.vh
 	vivado -mode tcl < compile.tcl
 
 clean : cleanVsim cleanXst
-	rm -rf work transcript *.vvp *.lso *.out *.ngc *.xrpt *.srp _xmsgs xst *.log *.jou vivado
+	rm -rf work transcript *.vvp *.lso *.out *.ngc *.xrpt *.srp _xmsgs xst *.log \
+		*.jou vivado std_fifo.vvp
 
 vim:
-	vim -p makefile compile.tcl
+	vim -p makefile compile.tcl \
+		std_fifo_tb.v \
+		std_fifo.v

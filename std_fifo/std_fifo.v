@@ -15,7 +15,7 @@
  */
 module std_fifo(rst, clk, push, pop, d, q, full, empty, count, almost_empty, almost_full);
     parameter WIDTH = 8;
-    parameter DEPTH = 6;
+    parameter DEPTH = 8;
     parameter DEPTH_ADDR_WIDTH = log2(DEPTH-1);
     parameter ALMOST_EMPTY_COUNT = 1;
     parameter ALMOST_FULL_COUNT = 1;
